@@ -1,5 +1,5 @@
 
 
-elm make src/Main.elm --output=elm-app.js --debug 
+elm make ./src/Main.elm --output=./publish/elm-app.js --debug 
 
 
