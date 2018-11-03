@@ -14,4 +14,4 @@ appTitle =
 
 
 maxEm =
-    30
+    10

@@ -4,7 +4,7 @@ import Browser
 import Dict exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (..)
 import Random exposing (..)
 import Random.Char exposing (..)
 import Set exposing (..)
@@ -17,9 +17,8 @@ type alias Model =
     , after : String
     , used : Set Char
     , repeats : Int
-    , message : String
-    , title : String
     , parts : Dict Int Part
+    , done : Bool
     }
 
 
@@ -37,11 +36,10 @@ initialModel _ =
             { emoji = ' '
             , used = Set.empty
             , repeats = 0
-            , message = ""
-            , title = ""
             , parts = Dict.empty
             , before = ""
             , after = ""
+            , done = False
             }
     in
     ( m, Cmd.none )
@@ -71,7 +69,12 @@ update msg model =
                 ( model, newEmoji )
 
             else
-                ( { model | message = "the end!" }, Cmd.none )
+                ( { model
+                    | parts = Dict.insert (Dict.size model.parts) (Part "The End!" ' ' "") model.parts
+                    , done = True
+                  }
+                , Cmd.none
+                )
 
         NewEmoji em ->
             if Set.member em model.used then
@@ -90,13 +93,6 @@ update msg model =
                         }
                 in
                 ( upd, Cmd.none )
-
-        AddTitle t ->
-            let
-                m =
-                    { model | title = t }
-            in
-            ( m, Cmd.none )
 
         AddPart b em a ->
             let
@@ -152,12 +148,16 @@ view model =
         emojiInput =
             if hasEmoji then
                 div []
-                    [ input [ maxlength 100, placeholder ex, value model.before, onInput GetBefore ] []
+                    [ button [ onClick <| AddPart (inputOrExample model.before) model.emoji model.after ] [ text "Add To Story" ]
+                    , button [ onClick Cancel ] [ text "Cancel" ]
+                    , br [] []
+                    , input [ maxlength 100, placeholder ex, value model.before, onInput GetBefore ] []
                     , div [] [ text ("[" ++ String.fromChar model.emoji ++ "]") ]
                     , input [ maxlength 100, value model.after, onInput GetAfter ] []
-                    , button [ onClick <| AddPart (inputOrExample model.before) model.emoji model.after ] [ text "Add To Story" ]
-                    , button [ onClick Cancel ] [ text "Cancel" ]
                     ]
+
+            else if model.done || Dict.size model.parts - 1 == maxEm then
+                div [] []
 
             else
                 button [ onClick <| GetEmoji ] [ text "Get Random Emoji" ]
@@ -169,12 +169,10 @@ view model =
     , body =
         [ h2 [] [ text appTitle ]
         , div []
-            [ span [] [ text <| "Repeats: " ++ String.fromInt model.repeats ]
-            , emojiInput
-            , div [] [ text model.message ]
+            [ emojiInput
+            , br [] []
+            , partsView
             ]
-        , br [] []
-        , partsView
         ]
     }
 
