@@ -1,6 +1,5 @@
 module Main exposing (main)
 
-
 import Browser
 import Html exposing (Html, button, div, text)
 
@@ -19,13 +18,11 @@ type Msg
     = NoOp
 
 
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         _ ->
             ( model, Cmd.none )
-
 
 
 type alias Document msg =
@@ -34,14 +31,14 @@ type alias Document msg =
     }
 
 
-
 view : Model -> Document Msg
 view model =
     { title = model.title
     , body =
         [ div [] []
         ]
-    } 
+    }
+
 
 main : Program () Model Msg
 main =

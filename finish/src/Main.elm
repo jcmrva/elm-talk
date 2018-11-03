@@ -2,17 +2,19 @@ module Main exposing (main)
 
 import Browser
 import Dict exposing (..)
-import Html exposing (Html, button, div, input, text)
+import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Random exposing (..)
 import Random.Char exposing (..)
 import Set exposing (..)
+import Values exposing (..)
 
 
 type alias Model =
-    { count : Int
+    { before : String
     , emoji : Char
+    , after : String
     , used : Set Char
     , repeats : Int
     , message : String
@@ -20,10 +22,11 @@ type alias Model =
     , parts : Dict Int Part
     }
 
+
 type alias Part =
-    { before : Maybe String
+    { before : String
     , emoji : Char
-    , after : Maybe String
+    , after : String
     }
 
 
@@ -31,20 +34,29 @@ initialModel : flags -> ( Model, Cmd Msg )
 initialModel _ =
     let
         m =
-            { count = 0, emoji = ' ', used = Set.empty, repeats = 0, message = "", title = "", parts = Dict.empty }
+            { emoji = ' '
+            , used = Set.empty
+            , repeats = 0
+            , message = ""
+            , title = ""
+            , parts = Dict.empty
+            , before = ""
+            , after = ""
+            }
     in
     ( m, Cmd.none )
-
-
-max =
-    30
 
 
 type Msg
     = GetEmoji
     | NewEmoji Char
     | AddTitle String
-    | AddPart Part
+    | AddPart String Char String
+    | EditPart Part
+    | DeletePart Part
+    | Cancel
+    | GetBefore String
+    | GetAfter String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -55,7 +67,7 @@ update msg model =
     in
     case msg of
         GetEmoji ->
-            if Set.size model.used < max then
+            if Set.size model.used < maxEm then
                 ( model, newEmoji )
 
             else
@@ -84,24 +96,92 @@ update msg model =
                 m =
                     { model | title = t }
             in
-                ( m, Cmd.none )
+            ( m, Cmd.none )
 
-        AddPart p ->
+        AddPart b em a ->
+            let
+                part =
+                    Part b em a
+
+                upd =
+                    { model
+                        | parts = Dict.insert (Dict.size model.parts) part model.parts
+                        , emoji = ' '
+                        , before = ""
+                        , after = ""
+                    }
+            in
+            ( upd, Cmd.none )
+
+        Cancel ->
+            ( { model | emoji = ' ' }, Cmd.none )
+
+        GetBefore v ->
+            ( { model | before = v }, Cmd.none )
+
+        GetAfter v ->
+            ( { model | after = v }, Cmd.none )
+
+        _ ->
             ( model, Cmd.none )
 
 
 view : Model -> Document Msg
 view model =
-    { title = "Random Emoji Storybuilder"
+    let
+        hasPart =
+            not <| Dict.isEmpty model.parts
+
+        ex =
+            if hasPart then
+                ""
+
+            else
+                exampleTxt
+
+        inputOrExample b =
+            if b == "" then
+                ex
+
+            else
+                b
+
+        hasEmoji =
+            model.emoji /= ' '
+
+        emojiInput =
+            if hasEmoji then
+                div []
+                    [ input [ maxlength 100, placeholder ex, value model.before, onInput GetBefore ] []
+                    , div [] [ text ("[" ++ String.fromChar model.emoji ++ "]") ]
+                    , input [ maxlength 100, value model.after, onInput GetAfter ] []
+                    , button [ onClick <| AddPart (inputOrExample model.before) model.emoji model.after ] [ text "Add To Story" ]
+                    , button [ onClick Cancel ] [ text "Cancel" ]
+                    ]
+
+            else
+                button [ onClick <| GetEmoji ] [ text "Get Random Emoji" ]
+
+        partsView =
+            div [] (Dict.map partView model.parts |> Dict.values |> List.reverse)
+    in
+    { title = appTitle
     , body =
-        [ div []
-            [ div [] [ text <| String.fromChar <| model.emoji ]
-            , button [ onClick <| GetEmoji ] [ text "Get Random Emoji" ]
-            , div [] [ text <| "Repeats: " ++ String.fromInt model.repeats ]
+        [ h2 [] [ text appTitle ]
+        , div []
+            [ span [] [ text <| "Repeats: " ++ String.fromInt model.repeats ]
+            , emojiInput
             , div [] [ text model.message ]
             ]
+        , br [] []
+        , partsView
         ]
     }
+
+
+partView : Int -> Part -> Html Msg
+partView k p =
+    div [ id <| String.fromInt k ] [ text <| p.before ++ String.fromChar p.emoji ++ p.after ]
 
 
 type alias Document msg =
