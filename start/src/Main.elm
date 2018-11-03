@@ -7,13 +7,12 @@ import Html exposing (Html, button, div, text)
 
 type alias Model =
     { title : String
-    , name : String 
     }
 
 
-initialModel : String -> ( Model, Cmd Msg )
-initialModel flag =
-    ( { name = flag, title = "Elm Demo" }, Cmd.none )
+initialModel : flags -> ( Model, Cmd Msg )
+initialModel _ =
+    ( { title = "Elm Demo" }, Cmd.none )
 
 
 type Msg
@@ -21,12 +20,10 @@ type Msg
 
 
 
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
+        _ ->
             ( model, Cmd.none )
 
 
@@ -42,21 +39,15 @@ view : Model -> Document Msg
 view model =
     { title = model.title
     , body =
-        [ div []
-            []
+        [ div [] []
         ]
     } 
 
-
+main : Program () Model Msg
 main =
     Browser.document
         { init = initialModel
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none

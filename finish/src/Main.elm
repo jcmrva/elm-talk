@@ -5,7 +5,6 @@ import Dict exposing (..)
 import Html exposing (Html, button, div, input, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import RES exposing (..)
 import Random exposing (..)
 import Random.Char exposing (..)
 import Set exposing (..)
@@ -19,6 +18,12 @@ type alias Model =
     , message : String
     , title : String
     , parts : Dict Int Part
+    }
+
+type alias Part =
+    { before : Maybe String
+    , emoji : Char
+    , after : Maybe String
     }
 
 
@@ -79,7 +84,7 @@ update msg model =
                 m =
                     { model | title = t }
             in
-            ( m, Cmd.none )
+                ( m, Cmd.none )
 
         AddPart p ->
             ( model, Cmd.none )
